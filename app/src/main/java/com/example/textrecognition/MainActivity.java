@@ -28,8 +28,11 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
@@ -45,13 +48,13 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     ImageView mImageView;
     EditText mTextView;
-    Button b1, b2, b3;
+    Button b1, b2, b3,b4;
     Context mContext;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     Bitmap imageBitmap;
     Uri imguri;
     DatabaseReference mDatabaseReference;
-
+    DatabaseReference reff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +65,9 @@ public class MainActivity extends AppCompatActivity {
         b1 = (Button) findViewById(R.id.b1);
         b2 = (Button) findViewById(R.id.b2);
         b3 = (Button) findViewById(R.id.b3);
+        b4=(Button)findViewById(R.id.b4);
         mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+        reff=FirebaseDatabase.getInstance().getReference();
         b1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -81,10 +86,39 @@ load1();
                 load();
             }
         });
+        b4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                result1();
+            }
+        });
+    }
+    private void result1()
+    {
+        reff= FirebaseDatabase.getInstance().getReference();
+        reff.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String result = dataSnapshot.child("result").getValue().toString();
+                String output = dataSnapshot.child("output").getValue().toString();
+                String correctOutput = "OUTPUT: " + output;
+                Intent i = new Intent(MainActivity.this, results.class);
+                i.putExtra("result", result);
+                i.putExtra("output", correctOutput);
+                startActivity(i);
 
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Toast.makeText(MainActivity.this,databaseError.getMessage(),Toast.LENGTH_SHORT).show();
+            }
+
+        });
     }
 
-    private void load()
+            private void load()
     {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             openfile();
@@ -145,7 +179,7 @@ load1();
             mImageView.setImageBitmap(imageBitmap);
         }
     }
-
+   String one,two;
     private void detecttxt()  {
         FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(imageBitmap);//instance of firebase instance image
         FirebaseVisionTextDetector detector = FirebaseVision.getInstance().getVisionTextDetector();
@@ -153,6 +187,21 @@ load1();
             @Override
             public void onSuccess(FirebaseVisionText firebaseVisionText) {
                 processtxt(firebaseVisionText);
+//                reff.addValueEventListener(new ValueEventListener() {
+//                    @Override
+//                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                        one=dataSnapshot.child("text").getValue().toString();
+//                        two=mTextView.getText().toString();
+//                        if(!two.equals(one))
+//                            mDatabaseReference.child("text").setValue(two);
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//                    }
+//                });
+
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -171,8 +220,6 @@ load1();
         }
         String txt="";
         for (FirebaseVisionText.Block block : firebaseVisionText.getBlocks()) {
-
-
             for(FirebaseVisionText.Line line:block.getLines())
             {
                  txt+= line.getText();
@@ -180,11 +227,8 @@ load1();
                 txt+="\n";
             mTextView.setTextSize(15);
             mTextView.setText(txt);
-
             mDatabaseReference.child("text").setValue(txt);
-
         }
-
     }
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
