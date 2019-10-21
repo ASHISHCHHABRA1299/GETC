@@ -47,10 +47,10 @@ def get_and_write(code):
 
 if __name__ == "__main__":
     config = { 
-        "apiKey": "AIzaSyBEABzLpVwtu01-VBtVXrPqcfz2mvpvKgw", 
-        "authDomain": "textrecoginition-71fd9.firebaseapp.com", 
-        "databaseURL": "https://textrecoginition-71fd9.firebaseio.com", 
-        "storageBucket": "textrecoginition-71fd9.appspot.com" 
+        "apiKey": "",                            #specify yours
+        "authDomain": "", 
+        "databaseURL": "", 
+        "storageBucket": "" 
     } 
     firebase = pyrebase.initialize_app(config)
     db = firebase.database()
